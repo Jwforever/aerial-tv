@@ -11,6 +11,8 @@
 
 **中文** · [English](README.en.md)
 
+> **此分支新增文件管理。** 应用列表里多了一个「文件管理」磁贴：浏览内部存储和 U 盘、打开文件、安装 APK，以及用手机扫码在同一个 Wi-Fi 下传文件。详见 [docs/FILE_MANAGER.md](docs/FILE_MANAGER.md)。此分支的 APK 使用本机 debug 签名，不能覆盖官方 Aerial，需要先卸载官方版再安装。
+
 <a href="https://aerial.qust.me"><img alt="官网" src="https://img.shields.io/badge/%E5%AE%98%E7%BD%91-1f6feb?style=for-the-badge&logo=safari&logoColor=white"></a>
 <a href="https://github.com/pengchujin/aerial-tv/releases/latest"><img alt="下载 APK" src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20APK-34a853?style=for-the-badge&logo=android&logoColor=white"></a>
 <a href="#安装"><img alt="安装" src="https://img.shields.io/badge/%E5%AE%89%E8%A3%85-d97757?style=for-the-badge&logo=gnubash&logoColor=white"></a>

@@ -11,6 +11,8 @@ Made for the Xiaomi, TCL and other TVs sold in China. It starts at boot and surv
 
 [中文](README.md) · **English**
 
+> **This fork adds a file manager.** A Files tile in the app grid browses internal storage and USB drives, opens files, installs APKs, and offers phone-to-TV transfers over the same Wi-Fi. See [docs/FILE_MANAGER.md](docs/FILE_MANAGER.md). Its APK is signed with a local debug key, so it cannot update an official Aerial install; uninstall that first.
+
 <a href="https://aerial.qust.me/en/"><img alt="Website" src="https://img.shields.io/badge/Website-1f6feb?style=for-the-badge&logo=safari&logoColor=white"></a>
 <a href="https://github.com/pengchujin/aerial-tv/releases/latest"><img alt="Download APK" src="https://img.shields.io/badge/Download%20APK-34a853?style=for-the-badge&logo=android&logoColor=white"></a>
 <a href="#install"><img alt="Install" src="https://img.shields.io/badge/Install-d97757?style=for-the-badge&logo=gnubash&logoColor=white"></a>

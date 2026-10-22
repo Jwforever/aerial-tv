@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05080c">
+<title>Aerial · 文件传输</title>
+<style>
+  :root {
+    --bg: #05080c;
+    --panel: rgba(28, 30, 34, 0.72);
+    --panel-strong: rgba(40, 43, 48, 0.86);
+    --line: rgba(255, 255, 255, 0.10);
+    --label: #f5f5f7;
+    --secondary: rgba(235, 235, 245, 0.62);
+    --tertiary: rgba(235, 235, 245, 0.35);
+    --blue: #0a84ff;
+    --green: #30d158;
+    --radius: 24px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background:
+      radial-gradient(120% 80% at 85% -10%, rgba(0, 122, 255, 0.22), transparent 55%),
+      radial-gradient(90% 70% at 0% 8%, rgba(48, 209, 88, 0.13), transparent 52%),
+      radial-gradient(120% 90% at 50% 110%, rgba(90, 200, 250, 0.08), transparent 60%),
+      var(--bg);
+    color: var(--label);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: env(safe-area-inset-top) 20px calc(28px + env(safe-area-inset-bottom));
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 22px 2px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; letter-spacing: .16em; font-size: 12px; font-weight: 700; color: var(--secondary); text-transform: uppercase; }
+  .brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 14px rgba(48, 209, 88, .8); }
+  .live { font-size: 12px; color: var(--tertiary); }
+  .hero { padding: 54px 4px 26px; }
+  h1 {
+    margin: 0;
+    font-size: clamp(36px, 9vw, 56px);
+    line-height: 1.04;
+    letter-spacing: -0.045em;
+    font-weight: 600;
+    background: linear-gradient(120deg, #ffffff 20%, #b9d7ff 62%, #9fe9c3 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .sub { margin: 16px 0 0; max-width: 480px; color: var(--secondary); font-size: 15px; line-height: 1.65; }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.025));
+    backdrop-filter: blur(28px) saturate(130%);
+    -webkit-backdrop-filter: blur(28px) saturate(130%);
+    box-shadow: 0 24px 70px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+    overflow: hidden;
+  }
+  .upload { padding: 22px; }
+  .drop {
+    border: 1px dashed rgba(255,255,255,.18);
+    border-radius: 18px;
+    padding: 30px 18px 26px;
+    text-align: center;
+    transition: border-color .2s ease, background .2s ease, transform .2s ease;
+  }
+  .drop.over { border-color: rgba(10,132,255,.8); background: rgba(10,132,255,.08); transform: scale(1.005); }
+  .orb {
+    width: 58px; height: 58px; margin: 0 auto 16px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: linear-gradient(145deg, rgba(10,132,255,.95), rgba(48,209,88,.8));
+    box-shadow: 0 14px 34px rgba(10,132,255,.28), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .orb svg { width: 25px; height: 25px; }
+  .drop h2 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
+  .drop p { margin: 8px 0 18px; color: var(--secondary); font-size: 13px; }
+  .pick {
+    appearance: none; border: 0; cursor: pointer;
+    padding: 12px 24px; border-radius: 999px;
+    color: #fff; font-size: 14px; font-weight: 600;
+    background: linear-gradient(180deg, #2f95ff, #0878ee);
+    box-shadow: 0 10px 24px rgba(10,132,255,.3), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .pick:active { transform: scale(.98); }
+  .progress { display: none; padding: 16px 4px 0; }
+  .progress.show { display: block; }
+  .progress-head { display: flex; justify-content: space-between; font-size: 12px; color: var(--secondary); margin-bottom: 8px; }
+  .bar { height: 5px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .bar > i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #0a84ff, #30d158); transition: width .18s ease; }
+  .results { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+  .results li { font-size: 12px; color: var(--secondary); display: flex; justify-content: space-between; gap: 12px; }
+  .files { margin-top: 26px; }
+  .section-title { display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px 10px; }
+  .section-title h3 { margin: 0; font-size: 13px; font-weight: 600; color: var(--secondary); letter-spacing: .06em; text-transform: uppercase; }
+  .section-title span { font-size: 12px; color: var(--tertiary); }
+  .list { list-style: none; margin: 0; padding: 0; }
+  .file { display: flex; align-items: center; gap: 13px; padding: 15px 18px; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .file:last-child { border-bottom: 0; }
+  .badge {
+    flex: 0 0 auto; width: 42px; height: 42px; border-radius: 12px;
+    display: grid; place-items: center;
+    font-size: 10px; font-weight: 800; letter-spacing: .04em; color: #dceaff;
+    background: linear-gradient(145deg, rgba(10,132,255,.24), rgba(10,132,255,.08));
+    border: 1px solid rgba(10,132,255,.26);
+  }
+  .badge.img { color: #d8ffe4; background: linear-gradient(145deg, rgba(48,209,88,.22), rgba(48,209,88,.07)); border-color: rgba(48,209,88,.24); }
+  .badge.vid { color: #ffe9d2; background: linear-gradient(145deg, rgba(255,159,10,.22), rgba(255,159,10,.07)); border-color: rgba(255,159,10,.24); }
+  .meta { min-width: 0; flex: 1; }
+  .name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .info { margin-top: 4px; font-size: 11px; color: var(--tertiary); }
+  .get {
+    flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%;
+    display: grid; place-items: center; color: var(--label);
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.10);
+  }
+  .get svg { width: 16px; height: 16px; }
+  .empty { padding: 34px 20px 38px; text-align: center; color: var(--tertiary); font-size: 13px; }
+  .foot { display: flex; align-items: center; gap: 8px; justify-content: center; padding: 20px 8px 0; color: var(--tertiary); font-size: 11px; text-align: center; line-height: 1.6; }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(12px);
+    opacity: 0; pointer-events: none; transition: .22s ease;
+    padding: 11px 18px; border-radius: 999px; font-size: 12px;
+    color: var(--label); background: rgba(40,43,48,.94); border: 1px solid var(--line);
+    box-shadow: 0 18px 50px rgba(0,0,0,.5); max-width: calc(100vw - 40px);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  @media (max-width: 480px) {
+    .hero { padding-top: 40px; }
+    .upload { padding: 14px; }
+    .file { padding: 13px 14px; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <div class="brand"><i class="brand-dot"></i>Aerial</div>
+    <div class="live">局域网传输</div>
+  </header>
+
+  <section class="hero">
+    <h1>把文件放到电视上。</h1>
+    <p class="sub">手机与电视连接同一个 Wi-Fi。选好的文件会直接出现在电视的 <strong>AerialDrop</strong> 文件夹里；也可以把电视上的文件下载回手机。</p>
+  </section>
+
+  <section class="card upload">
+    <div class="drop" id="drop">
+      <div class="orb">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/></svg>
+      </div>
+      <h2>发送文件到电视</h2>
+      <p>支持多选，也可以直接把文件拖到这里</p>
+      <button class="pick" id="pick">选择文件</button>
+      <input id="input" type="file" multiple hidden>
+    </div>
+    <div class="progress" id="progress">
+      <div class="progress-head"><span id="progress-label">正在上传…</span><span id="progress-pct">0%</span></div>
+      <div class="bar"><i id="bar"></i></div>
+      <ul class="results" id="results"></ul>
+    </div>
+  </section>
+
+  <section class="files">
+    <div class="section-title"><h3>电视上的文件</h3><span id="count"></span></div>
+    <div class="card">
+      <ul class="list" id="list"></ul>
+      <div class="empty" id="empty">还没有文件。先上传一个吧。</div>
+    </div>
+  </section>
+
+  <div class="foot">仅在此面板打开时可用 · 文件保存在电视的 AerialDrop 文件夹</div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const input = document.getElementById('input');
+  const pick = document.getElementById('pick');
+  const drop = document.getElementById('drop');
+  const progress = document.getElementById('progress');
+  const bar = document.getElementById('bar');
+  const pct = document.getElementById('progress-pct');
+  const progressLabel = document.getElementById('progress-label');
+  const results = document.getElementById('results');
+  const list = document.getElementById('list');
+  const empty = document.getElementById('empty');
+  const count = document.getElementById('count');
+  const toastEl = document.getElementById('toast');
+  let toastTimer;
+
+  function toast(message) {
+    toastEl.textContent = message;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+  }
+
+  function bytes(n) {
+    if (!Number.isFinite(n)) return '';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let i = 0, v = n;
+    while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+    return (i === 0 ? Math.round(v) : v.toFixed(v >= 100 ? 0 : 1)) + ' ' + units[i];
+  }
+
+  function stamp(ms) {
+    const d = new Date(ms);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' }) + ' ' +
+      d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  function extOf(name) {
+    const i = name.lastIndexOf('.');
+    return i > 0 ? name.slice(i + 1).toUpperCase().slice(0, 4) : 'FILE';
+  }
+
+  function badgeClass(name) {
+    const ext = extOf(name).toLowerCase();
+    if (['jpg','jpeg','png','gif','webp','heic','heif','bmp'].includes(ext)) return 'badge img';
+    if (['mp4','mkv','mov','avi','webm','ts','m2ts'].includes(ext)) return 'badge vid';
+    return 'badge';
+  }
+
+  function render(files) {
+    list.innerHTML = '';
+    empty.style.display = files.length ? 'none' : 'block';
+    count.textContent = files.length ? files.length + ' 个文件' : '';
+    for (const file of files) {
+      const li = document.createElement('li');
+      li.className = 'file';
+      const badge = document.createElement('div');
+      badge.className = badgeClass(file.name);
+      badge.textContent = extOf(file.name);
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      const name = document.createElement('div');
+      name.className = 'name';
+      name.textContent = file.name;
+      const info = document.createElement('div');
+      info.className = 'info';
+      info.textContent = bytes(file.size) + ' · ' + stamp(file.modified);
+      meta.append(name, info);
+      const link = document.createElement('a');
+      link.className = 'get';
+      link.href = 'file/' + encodeURIComponent(file.name);
+      link.setAttribute('download', '');
+      link.setAttribute('aria-label', '下载 ' + file.name);
+      link.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>';
+      li.append(badge, meta, link);
+      list.append(li);
+    }
+  }
+
+  async function refresh() {
+    try {
+      const res = await fetch('api/list', { cache: 'no-store' });
+      if (!res.ok) throw new Error('list failed');
+      const data = await res.json();
+      render(Array.isArray(data.files) ? data.files : []);
+    } catch {
+      empty.style.display = 'block';
+      empty.textContent = '暂时读不到文件列表。';
+    }
+  }
+
+  function uploadOne(file, index, total) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', 'upload?name=' + encodeURIComponent(file.name));
+      xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+      xhr.upload.onprogress = (event) => {
+        if (!event.lengthComputable) return;
+        const current = (index + event.loaded / event.total) / total;
+        const value = Math.max(0, Math.min(100, Math.round(current * 100)));
+        bar.style.width = value + '%';
+        pct.textContent = value + '%';
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          results.insertAdjacentHTML('beforeend', '<li><span>' + escapeHtml(file.name) + '</span><span>已发送</span></li>');
+          resolve();
+        } else {
+          results.insertAdjacentHTML('beforeend', '<li><span>' + escapeHtml(file.name) + '</span><span>失败</span></li>');
+          reject(new Error(xhr.status));
+        }
+      };
+      xhr.onerror = () => reject(new Error('network'));
+      xhr.send(file);
+    });
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  async function send(files) {
+    if (!files || !files.length) return;
+    progress.classList.add('show');
+    results.innerHTML = '';
+    bar.style.width = '0%';
+    pct.textContent = '0%';
+    let finished = 0;
+    let failed = 0;
+    for (let i = 0; i < files.length; i++) {
+      progressLabel.textContent = '正在上传 ' + (i + 1) + ' / ' + files.length;
+      try {
+        await uploadOne(files[i], i, files.length);
+      } catch {
+        failed++;
+      }
+      finished++;
+    }
+    bar.style.width = '100%';
+    pct.textContent = '100%';
+    progressLabel.textContent = failed ? finished - failed + ' 个成功，' + failed + ' 个失败' : '传输完成';
+    await refresh();
+    if (!failed) setTimeout(() => progress.classList.remove('show'), 1400);
+    else toast('部分文件没有发送成功');
+  }
+
+  pick.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => { send(input.files); input.value = ''; });
+  ['dragenter', 'dragover'].forEach((type) => drop.addEventListener(type, (event) => {
+    event.preventDefault();
+    drop.classList.add('over');
+  }));
+  ['dragleave', 'drop'].forEach((type) => drop.addEventListener(type, (event) => {
+    event.preventDefault();
+    drop.classList.remove('over');
+  }));
+  drop.addEventListener('drop', (event) => send(event.dataTransfer.files));
+
+  refresh();
+})();
+</script>
+</body>
+</html>

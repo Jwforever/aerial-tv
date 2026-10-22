@@ -219,7 +219,9 @@ fun AppMenu(
                                 if (CustomIcons.has(shownApp.key)) {
                                     MenuRow(Glyph.Photo, stringResource(R.string.menu_reset_icon), { onResetIcon(shownApp.key) })
                                 }
-                                MenuRow(Glyph.Info, stringResource(R.string.menu_info), { onInfo(shownApp.key) })
+                                if (!shownApp.internalTool) {
+                                    MenuRow(Glyph.Info, stringResource(R.string.menu_info), { onInfo(shownApp.key) })
+                                }
                             }
                             if (shownApp.removable) {
                                 MenuRow(Glyph.Trash, stringResource(R.string.menu_uninstall), { onUninstall(shownApp.key) }, destructive = true)

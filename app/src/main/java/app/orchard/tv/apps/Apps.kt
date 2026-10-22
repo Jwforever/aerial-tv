@@ -6,7 +6,10 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import app.orchard.tv.R
+import app.orchard.tv.files.FileManagerActivity
 import app.orchard.tv.system.TvSource
+import app.orchard.tv.ui.theme.Glyph
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -26,6 +29,8 @@ data class AppEntry(
     val source: TvSource? = null,
     /** Set for a folder's tile; [packageName] is then the folder's key. */
     val folder: Folder? = null,
+    /** A screen that belongs to Aerial itself (the file manager), not a separately installed app. */
+    val internalTool: Boolean = false,
 ) {
     val key: String get() = packageName
 
@@ -47,6 +52,17 @@ fun sourceEntry(source: TvSource): AppEntry = AppEntry(
 )
 
 const val SOURCE_KEY_PREFIX = "input:"
+
+/** The in-app file browser. Its key is Aerial's own package name, which [AppCatalog] otherwise filters out. */
+fun fileManagerEntry(context: Context): AppEntry = AppEntry(
+    packageName = context.packageName,
+    label = context.getString(R.string.files_title),
+    component = ComponentName(context, FileManagerActivity::class.java),
+    leanback = false,
+    removable = false,
+    art = TileArtFactory.glyphTile(0xFF64D2FF.toInt(), 0xFF0A84FF.toInt(), Glyph.Folder),
+    internalTool = true,
+)
 
 /** A Home tile for [folder], with [art] made from the apps in it. */
 fun folderEntry(folder: Folder, art: TileArt): AppEntry = AppEntry(
@@ -144,11 +160,12 @@ object AppCatalog {
         pm.resolveActivity(Intent(android.provider.Settings.ACTION_SETTINGS), 0)
             ?.let { byCategory.putIfAbsent(it.activityInfo.packageName, SystemTile.Settings) }
 
-        coroutineScope {
+        val entries = coroutineScope {
             found.values.map { (info, leanback) ->
                 async { runCatching { entry(pm, info, leanback, byCategory) }.getOrNull() }
             }.awaitAll().filterNotNull()
-        }.also { loaded = it }
+        }
+        (entries + fileManagerEntry(context)).also { loaded = it }
     }
 
     /**

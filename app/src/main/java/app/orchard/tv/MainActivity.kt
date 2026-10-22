@@ -362,6 +362,21 @@ class MainActivity : ComponentActivity() {
             return
         }
         openedAppSinceHome = true
+        // An in-app screen is started as part of this task. A HOME-style intent with NEW_TASK can
+        // make the system look for another Aerial task instead, which is not what this tile is.
+        if (app.internalTool) {
+            val options = bounds?.let {
+                ActivityOptions.makeScaleUpAnimation(
+                    window.decorView, it.left.toInt(), it.top.toInt(), it.width.toInt(), it.height.toInt(),
+                ).toBundle()
+            }
+            try {
+                startActivity(Intent().setComponent(app.component), options)
+            } catch (e: Exception) {
+                Toast.makeText(this, getString(R.string.launch_failed, app.label), Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
         // The stock launcher (Xiaomi's PatchWall, with the maker's own iQIYI / Mango content) can
         // only be opened through the system Home action; see HomeGuardService.openStockLauncher.
         // Hisense VIDAA hands the Home action to Aerial once persist.vt.use_home_pkg points at it,
