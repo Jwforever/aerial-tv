@@ -1,10 +1,8 @@
-name: Build
+name: Release
 
 on:
   push:
-    branches: [main]
     tags: ["v*"]
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -12,7 +10,15 @@ permissions:
 jobs:
   standard-release:
     runs-on: ubuntu-latest
+    env:
+      HAS_SIGNING_KEY: ${{ secrets.SIGNING_KEY != '' }}
     steps:
+      - name: Require the signing secrets
+        if: env.HAS_SIGNING_KEY != 'true'
+        run: |
+          echo "::error::Add SIGNING_KEY, SIGNING_STORE_PASSWORD, SIGNING_KEY_ALIAS and SIGNING_KEY_PASSWORD in Settings -> Secrets and variables -> Actions."
+          exit 1
+
       - uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -29,15 +35,42 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build standard release
-        run: ./gradlew assembleStandardRelease --console=plain
+      # build.gradle.kts reads local/signing.properties and falls back to a debug
+      # key when it is missing, so the release key has to exist before the build.
+      - name: Restore signing key
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          mkdir -p local
+          printf '%s' "$SIGNING_KEY" | base64 -d > local/aerial-release.jks
+          {
+            echo "storeFile=aerial-release.jks"
+            echo "storePassword=$STORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > local/signing.properties
 
-      - name: Read versionName
+      - name: Version from tag
         id: version
         run: |
-          version=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts | head -n1)
-          test -n "$version"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+          version="${GITHUB_REF_NAME#v}"
+          if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+)*(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::Tag must look like v1.29 or v1.29-file.1"
+            exit 1
+          fi
+          IFS='.' read -r major minor patch <<< "${version%%-*}"
+          patch="${patch:-0}"
+          echo "name=$version" >> "$GITHUB_OUTPUT"
+          echo "code=$((10#$major * 10000 + 10#$minor * 100 + 10#$patch))" >> "$GITHUB_OUTPUT"
+
+      - name: Build standard release
+        run: >-
+          ./gradlew assembleStandardRelease --console=plain
+          -PversionName="${{ steps.version.outputs.name }}"
+          -PversionCode="${{ steps.version.outputs.code }}"
 
       - name: Rename APK to what tools/install.sh downloads
         run: |
@@ -47,14 +80,10 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', steps.version.outputs.version) }}
-          name: Aerial ${{ steps.version.outputs.version }}
+          name: Aerial ${{ steps.version.outputs.name }}
           body: |
             Built from ${{ github.sha }}.
-
-            This APK is signed with the runner's debug key, because
-            local/signing.properties is not in the repository. It installs
-            fresh, but it cannot update an install signed with the real key.
+            versionName ${{ steps.version.outputs.name }}, versionCode ${{ steps.version.outputs.code }}.
           files: dist/aerial-standard.apk
           fail_on_unmatched_files: true
 
