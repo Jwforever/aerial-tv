@@ -3,10 +3,11 @@ name: Build
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   standard-release:
@@ -28,16 +29,38 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # local/signing.properties is not versioned, so this APK is signed with the
-      # runner's generated debug key: installable fresh, but it cannot update an
-      # existing install that was signed with the real key.
       - name: Build standard release
         run: ./gradlew assembleStandardRelease --console=plain
 
-      - name: Upload APK
+      - name: Read versionName
+        id: version
+        run: |
+          version=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts | head -n1)
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Rename APK to what tools/install.sh downloads
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/standard/release/app-standard-release.apk dist/aerial-standard.apk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', steps.version.outputs.version) }}
+          name: Aerial ${{ steps.version.outputs.version }}
+          body: |
+            Built from ${{ github.sha }}.
+
+            This APK is signed with the runner's debug key, because
+            local/signing.properties is not in the repository. It installs
+            fresh, but it cannot update an install signed with the real key.
+          files: dist/aerial-standard.apk
+          fail_on_unmatched_files: true
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: aerial-standard-release
-          path: app/build/outputs/apk/standard/release/*.apk
-          if-no-files-found: error
+          path: dist/aerial-standard.apk
           retention-days: 14
