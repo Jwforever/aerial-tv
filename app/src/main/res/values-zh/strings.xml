@@ -157,6 +157,8 @@
     <string name="files_internal">内部存储</string>
     <string name="files_external">U 盘 / SD 卡</string>
     <string name="files_free_of">可用 %1$s，共 %2$s</string>
+    <string name="files_total">共 %1$s</string>
+    <string name="files_available">可用</string>
     <string name="files_empty">此文件夹为空</string>
     <string name="files_read_failed">无法读取此文件夹</string>
     <string name="files_loading">正在读取…</string>
@@ -165,6 +167,8 @@
     <string name="files_grant">去设置</string>
     <string name="files_open_failed">没有可以打开此文件的应用</string>
     <string name="files_root">存储设备</string>
+    <string name="files_item_count">%1$d 项</string>
+    <string name="files_drop_subtitle">手机传来的文件</string>
     <string name="files_back">返回</string>
     <string name="files_folder">文件夹</string>
     <string name="files_apk">安装包</string>

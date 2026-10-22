@@ -158,6 +158,8 @@
     <string name="files_internal">Internal storage</string>
     <string name="files_external">USB drive</string>
     <string name="files_free_of">%1$s free of %2$s</string>
+    <string name="files_total">%1$s total</string>
+    <string name="files_available">free</string>
     <string name="files_empty">This folder is empty</string>
     <string name="files_read_failed">This folder cannot be read</string>
     <string name="files_loading">Reading…</string>
@@ -166,6 +168,8 @@
     <string name="files_grant">Open Settings</string>
     <string name="files_open_failed">No app can open this file</string>
     <string name="files_root">Storage</string>
+    <string name="files_item_count">%1$d items</string>
+    <string name="files_drop_subtitle">Files sent from your phone</string>
     <string name="files_back">Back</string>
     <string name="files_folder">Folder</string>
     <string name="files_apk">App package</string>

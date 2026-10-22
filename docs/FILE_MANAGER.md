@@ -4,6 +4,8 @@
 
 ![文件管理](file-manager.png)
 
+![文件和文件夹卡片](file-manager-files.png)
+
 ## 能做什么
 
 - **浏览存储**：内部存储、U 盘 / SD 卡（Android 5–10 用外部存储权限，Android 11+ 用「所有文件访问」）。
