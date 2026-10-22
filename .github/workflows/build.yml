@@ -1,8 +1,12 @@
 name: Release
 
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 1.0.2 (creates the v1.0.2 tag)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -53,12 +57,14 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > local/signing.properties
 
-      - name: Version from tag
+      - name: Read version
         id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${INPUT_VERSION#v}"
           if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+)*(-[0-9A-Za-z.]+)?$ ]]; then
-            echo "::error::Tag must look like v1.29 or v1.29-file.1"
+            echo "::error::Version must look like 1.0.2 or 1.0.2-file.1"
             exit 1
           fi
           IFS='.' read -r major minor patch <<< "${version%%-*}"
@@ -80,6 +86,7 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.version.outputs.name }}
           name: Aerial ${{ steps.version.outputs.name }}
           body: |
             Built from ${{ github.sha }}.
