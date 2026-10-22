@@ -17,8 +17,8 @@ android {
         minSdk = 21
         targetSdk = 34
         // CI derives both from the release tag; local builds keep the checked-in values.
-        versionCode = providers.gradleProperty("versionCode").orNull?.toInt() ?: 31
-        versionName = providers.gradleProperty("versionName").orNull ?: "1.28-file.1"
+        versionCode = providers.gradleProperty("versionCode").orNull?.toInt() ?: 10000
+        versionName = providers.gradleProperty("versionName").orNull ?: "1.0"
     }
 
     // standard: a normal HOME app. guard: no HOME intent filter at all, for China-market firmwares
